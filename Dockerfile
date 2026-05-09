@@ -8,7 +8,7 @@ COPY . .
 
 RUN mkdir -p Data
 
-RUN g++ -std=c++11 main.cpp -o ecommerce -lws2_32 -pthread
+RUN g++ -std=c++11 main.cpp -o ecommerce -pthread
 
 EXPOSE 8080
 

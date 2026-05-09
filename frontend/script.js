@@ -36,11 +36,13 @@ function saveCart() {
 }
 
 function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const badge = document.getElementById('cartCount');
-    badge.textContent = count;
-    badge.style.transform = 'scale(1.3)';
-    setTimeout(() => badge.style.transform = '', 250);
+    const cartBadge = document.getElementById('cartCount');
+    if (cartBadge) {
+        cartBadge.textContent = count;
+        cartBadge.style.display = count > 0 ? 'flex' : 'flex';
+    }
 }
 
 function addToCart(product) {
@@ -499,12 +501,20 @@ async function changePassword() {
 // ─── UI State ────────────────────────────────────────────────────
 
 function updateUIForAdmin() {
-    document.getElementById('userNameDisplay').innerHTML = '<i class="fas fa-shield-alt"></i> Admin';
-    document.getElementById('userLoginBtn').style.display = 'none';
-    document.getElementById('adminLoginBtn').style.display = 'none';
-    document.getElementById('logoutBtn').style.display = 'flex';
-    document.getElementById('addProductBtn').style.display = 'flex';
-    document.getElementById('ordersNavLink').style.display = 'flex';
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const adminAddBtn = document.getElementById('adminAddBtn');
+    const adminAnalyticsBtn = document.getElementById('adminAnalyticsBtn');
+    const clearOrdersBtn = document.getElementById('clearOrdersBtn');
+    
+    if (userNameDisplay) userNameDisplay.innerHTML = '<i class="fas fa-shield-alt"></i> Admin';
+    if (adminLoginBtn) adminLoginBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'flex';
+    if (adminAddBtn) adminAddBtn.style.display = 'flex';
+    if (adminAnalyticsBtn) adminAnalyticsBtn.style.display = 'flex';
+    if (clearOrdersBtn) clearOrdersBtn.style.display = 'flex';
+    
     isAdmin = true;
 }
 
@@ -520,12 +530,21 @@ function updateUIForUser() {
 }
 
 function updateUIForGuest() {
-    document.getElementById('userNameDisplay').innerHTML = '';
-    document.getElementById('userLoginBtn').style.display = 'flex';
-    document.getElementById('adminLoginBtn').style.display = 'flex';
-    document.getElementById('logoutBtn').style.display = 'none';
-    document.getElementById('addProductBtn').style.display = 'none';
-    document.getElementById('ordersNavLink').style.display = 'none';
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const adminAddBtn = document.getElementById('adminAddBtn');
+    const adminAnalyticsBtn = document.getElementById('adminAnalyticsBtn');
+    const clearOrdersBtn = document.getElementById('clearOrdersBtn');
+    
+    // Only try to modify elements if they exist
+    if (userNameDisplay) userNameDisplay.innerHTML = '';
+    if (adminLoginBtn) adminLoginBtn.style.display = 'flex';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    if (adminAddBtn) adminAddBtn.style.display = 'none';
+    if (adminAnalyticsBtn) adminAnalyticsBtn.style.display = 'none';
+    if (clearOrdersBtn) clearOrdersBtn.style.display = 'none';
+    
     isAdmin = false;
 }
 

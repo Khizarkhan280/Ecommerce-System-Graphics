@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Shop — Premium Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="logo">
+            <span class="logo-icon"><i class="fas fa-gem"></i></span>
+            <span class="logo-text">E·Shop</span>
+        </div>
+        <div class="nav-links" id="navLinks">
+            <a class="nav-link active" onclick="showSection('products', this)">
+                <i class="fas fa-th-large"></i> <span>Collection</span>
+            </a>
+            <a class="nav-link" onclick="showSection('cart', this)">
+                <i class="fas fa-shopping-bag"></i> <span>Bag</span>
+                <span id="cartCount" class="cart-badge">0</span>
+            </a>
+            <!-- Admin-only nav link -->
+            <a class="nav-link admin-only" id="ordersNavLink" onclick="showSection('orders', this)" style="display:none">
+                <i class="fas fa-receipt"></i> <span>Orders</span>
+            </a>
+        </div>
+        <div id="userInfo" class="user-info">
+            <div class="user-name" id="userNameDisplay"></div>
+            <button class="btn-login" id="userLoginBtn" onclick="showUserLoginModal()">
+                <i class="fas fa-user"></i> Login
+            </button>
+            <button class="btn-login" id="adminLoginBtn" onclick="showAdminModal()">
+                <i class="fas fa-lock"></i> Admin
+            </button>
+            <button class="btn-logout" id="logoutBtn" onclick="logout()" style="display:none">
+                <i class="fas fa-sign-out-alt"></i> Exit
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- User Login Modal -->
+<div id="userLoginModal" class="modal">
+    <div class="modal-overlay" onclick="closeUserLoginModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-user"></i> User Login</h3>
+            <span class="close-modal" onclick="closeUserLoginModal()"><i class="fas fa-times"></i></span>
+        </div>
+        <div id="userLoginForm">
+            <div class="input-group">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" id="loginUsername" placeholder="Username" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-key input-icon"></i>
+                <input type="password" id="loginPassword" placeholder="Password" autocomplete="off">
+            </div>
+            <button class="btn-primary full-width" onclick="userLogin()">Login</button>
+            <p class="modal-hint" style="margin-top: 16px; text-align: center;">
+                Don't have an account? <a href="#" onclick="switchToRegister()" style="color: var(--gold);">Register here</a>
+            </p>
+        </div>
+        <div id="userRegisterForm" style="display:none;">
+            <div class="input-group">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" id="regUsername" placeholder="Username (min 3 chars)" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" id="regEmail" placeholder="Email" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-key input-icon"></i>
+                <input type="password" id="regPassword" placeholder="Password (min 6 chars)" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-key input-icon"></i>
+                <input type="password" id="regConfirmPassword" placeholder="Confirm Password" autocomplete="off">
+            </div>
+            <button class="btn-primary full-width" onclick="userRegister()">Register</button>
+            <p class="modal-hint" style="margin-top: 16px; text-align: center;">
+                Already have an account? <a href="#" onclick="switchToLogin()" style="color: var(--gold);">Login here</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Login Modal -->
+<div id="adminModal" class="modal">
+    <div class="modal-overlay" onclick="closeAdminModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-shield-alt"></i> Admin Access</h3>
+            <span class="close-modal" onclick="closeAdminModal()"><i class="fas fa-times"></i></span>
+        </div>
+        <div id="adminLoginForm">
+            <div class="input-group">
+                <i class="fas fa-key input-icon"></i>
+                <input type="password" id="adminPassword" placeholder="Enter passphrase" autocomplete="off">
+            </div>
+            <button class="btn-primary full-width" onclick="adminLogin()">Authenticate</button>
+        </div>
+        <p class="modal-hint">Demo: <code>admin123</code></p>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div id="addProductModal" class="modal">
+    <div class="modal-overlay" onclick="closeAddProductModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-plus-circle"></i> New Product</h3>
+            <span class="close-modal" onclick="closeAddProductModal()"><i class="fas fa-times"></i></span>
+        </div>
+        <div class="form-grid">
+            <div class="input-group">
+                <i class="fas fa-hashtag input-icon"></i>
+                <input type="number" id="prodId" placeholder="Product ID">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-tag input-icon"></i>
+                <input type="text" id="prodName" placeholder="Product Name">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-rupee-sign input-icon"></i>
+                <input type="number" id="prodPrice" placeholder="Price (Rs.)" step="0.01">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-cubes input-icon"></i>
+                <input type="number" id="prodQty" placeholder="Stock Quantity">
+            </div>
+            <button class="btn-primary full-width" onclick="addProduct()">
+                <i class="fas fa-plus"></i> Add to Catalog
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="changePasswordModal" class="modal">
+    <div class="modal-overlay" onclick="closeChangePasswordModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-key"></i> Change Password</h3>
+            <span class="close-modal" onclick="closeChangePasswordModal()"><i class="fas fa-times"></i></span>
+        </div>
+        <div class="form-grid">
+            <div class="input-group">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" id="currentPassword" placeholder="Current password" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" id="newPassword" placeholder="New password" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" id="confirmPassword" placeholder="Confirm new password" autocomplete="off">
+            </div>
+            <button class="btn-primary full-width" onclick="changePassword()">
+                <i class="fas fa-save"></i> Update Password
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+
+    <!-- Products Section -->
+    <div id="productsSection" class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <span class="section-label">Our Catalog</span>
+                <h2>Featured <em>Products</em></h2>
+            </div>
+            <button id="addProductBtn" class="btn-admin" onclick="showAddProductModal()" style="display:none">
+                <i class="fas fa-plus"></i> Add Product
+            </button>
+        </div>
+        <div id="products-list" class="product-grid">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Curating collection…</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Section -->
+    <div id="cartSection" class="section" style="display:none">
+        <div class="section-header">
+            <div class="section-title">
+                <span class="section-label">Your Selection</span>
+                <h2>Shopping <em>Bag</em></h2>
+            </div>
+        </div>
+        <div class="cart-layout">
+            <div class="cart-card">
+                <div id="cart-items" class="cart-items"></div>
+            </div>
+            <div class="cart-summary-card">
+                <h4>Order Summary</h4>
+                <div id="cart-total"></div>
+                <button onclick="checkout()" class="btn-checkout">
+                    <span>Confirm Order</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Section (Admin only) -->
+    <div id="ordersSection" class="section" style="display:none">
+        <div class="section-header">
+            <div class="section-title">
+                <span class="section-label">Admin Panel</span>
+                <h2>Order <em>History</em></h2>
+            </div>
+            <div class="admin-actions">
+                <button class="btn-admin" onclick="showChangePasswordModal()">
+                    <i class="fas fa-key"></i> Change Password
+                </button>
+                <button class="btn-danger" onclick="clearOrders()">
+                    <i class="fas fa-trash-alt"></i> Clear All Orders
+                </button>
+            </div>
+        </div>
+        <div id="orders-container" class="orders-container">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Loading orders…</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast">
+    <i class="toast-icon fas fa-check-circle"></i>
+    <span id="toast-msg"></span>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

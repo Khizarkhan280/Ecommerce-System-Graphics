@@ -1,0 +1,2 @@
+g++ -std=c++17 -pthread main.cpp -o ecommerce.exe -lws2_32
+./ecommerce.exe  

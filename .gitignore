@@ -1,0 +1,7 @@
+*.exe
+*.o
+Data/
+*.txt
+!README.txt
+.vscode/
+.idea/

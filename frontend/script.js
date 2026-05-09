@@ -83,7 +83,7 @@ function renderCart() {
             <div style="font-size:40px;margin-bottom:12px">🛍️</div>
             Your bag is empty
         </div>`;
-        totalContainer.innerHTML = '';
+        if (totalContainer) totalContainer.innerHTML = '';
         return;
     }
 
@@ -110,25 +110,31 @@ function renderCart() {
             </div>`;
     });
 
-    totalContainer.innerHTML = `
-        <div class="cart-total">
-            <span style="color:var(--muted);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:400">Total</span>
-            <span>Rs. ${total.toFixed(2)}</span>
-        </div>`;
+    if (totalContainer) {
+        totalContainer.innerHTML = `
+            <div class="cart-total">
+                <span style="color:var(--muted);font-size:14px;font-family:'DM Sans',sans-serif;font-weight:400">Total</span>
+                <span>Rs. ${total.toFixed(2)}</span>
+            </div>`;
+    }
 }
 
 async function updateStock(productId, delta) {
-    const response = await fetch(`/api/products/${productId}/stock`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
-        body: JSON.stringify({ delta })
-    });
-    const result = await response.json();
-    if (result.success) {
-        showMessage(result.message, 'success');
-        loadProducts();
-    } else {
-        showMessage(result.message, 'error');
+    try {
+        const response = await fetch(`/api/products/${productId}/stock`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+            body: JSON.stringify({ delta })
+        });
+        const result = await response.json();
+        if (result.success) {
+            showMessage(result.message, 'success');
+            loadProducts();
+        } else {
+            showMessage(result.message, 'error');
+        }
+    } catch (err) {
+        showMessage('Cannot update stock', 'error');
     }
 }
 
@@ -209,12 +215,10 @@ async function userLogin() {
             localStorage.setItem('username', result.username);
             showMessage(`Welcome back, ${result.username}!`, 'success');
             closeUserLoginModal();
-            if (result.isAdmin) {
-                updateUIForAdmin();
-            } else {
-                updateUIForUser();
-            }
+            updateUIAfterLogin();
             loadProducts();
+            // Update cart display
+            renderCart();
             // Clear login form
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginPassword').value = '';
@@ -246,7 +250,7 @@ async function adminLogin() {
             localStorage.setItem('username', 'Admin');
             showMessage('Welcome back, Admin!', 'success');
             closeAdminModal();
-            updateUIForAdmin();
+            updateUIAfterLogin();
             loadProducts();
             // Clear admin password field
             document.getElementById('adminPassword').value = '';
@@ -270,8 +274,86 @@ function logout() {
     // Clear cart on logout
     cart = [];
     saveCart();
-    // Switch back to products view if on orders
+    // Switch back to products view
     showSection('products');
+}
+
+function updateUIAfterLogin() {
+    const username = localStorage.getItem('username') || (isAdmin ? 'Admin' : 'User');
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const userLoginBtn = document.getElementById('userLoginBtn');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const adminAddBtn = document.getElementById('adminAddBtn');
+    const adminAnalyticsBtn = document.getElementById('adminAnalyticsBtn');
+    const clearOrdersBtn = document.getElementById('clearOrdersBtn');
+    
+    if (userNameDisplay) {
+        if (isAdmin) {
+            userNameDisplay.innerHTML = '<i class="fas fa-shield-alt"></i> Admin';
+        } else {
+            userNameDisplay.innerHTML = `<i class="fas fa-user"></i> ${username}`;
+        }
+        userNameDisplay.style.display = 'flex';
+    }
+    
+    if (userLoginBtn) userLoginBtn.style.display = 'none';
+    if (adminLoginBtn) adminLoginBtn.style.display = isAdmin ? 'none' : 'flex';
+    if (logoutBtn) logoutBtn.style.display = 'flex';
+    
+    if (isAdmin) {
+        if (adminAddBtn) adminAddBtn.style.display = 'flex';
+        if (adminAnalyticsBtn) adminAnalyticsBtn.style.display = 'flex';
+        if (clearOrdersBtn) clearOrdersBtn.style.display = 'flex';
+    } else {
+        if (adminAddBtn) adminAddBtn.style.display = 'none';
+        if (adminAnalyticsBtn) adminAnalyticsBtn.style.display = 'none';
+        if (clearOrdersBtn) clearOrdersBtn.style.display = 'none';
+    }
+}
+
+function updateUIForGuest() {
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const userLoginBtn = document.getElementById('userLoginBtn');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const adminAddBtn = document.getElementById('adminAddBtn');
+    const adminAnalyticsBtn = document.getElementById('adminAnalyticsBtn');
+    const clearOrdersBtn = document.getElementById('clearOrdersBtn');
+    
+    if (userNameDisplay) {
+        userNameDisplay.innerHTML = '';
+        userNameDisplay.style.display = 'none';
+    }
+    if (userLoginBtn) userLoginBtn.style.display = 'flex';
+    if (adminLoginBtn) adminLoginBtn.style.display = 'flex';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    if (adminAddBtn) adminAddBtn.style.display = 'none';
+    if (adminAnalyticsBtn) adminAnalyticsBtn.style.display = 'none';
+    if (clearOrdersBtn) clearOrdersBtn.style.display = 'none';
+}
+
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    const admin = localStorage.getItem('isAdmin') === 'true';
+    const username = localStorage.getItem('username');
+    
+    if (token) {
+        currentToken = token;
+        if (admin) {
+            isAdmin = true;
+            currentUser = { username: 'Admin', isAdmin: true };
+            updateUIAfterLogin();
+        } else if (username) {
+            isAdmin = false;
+            currentUser = { username: username, isAdmin: false };
+            updateUIAfterLogin();
+        } else {
+            updateUIForGuest();
+        }
+    } else {
+        updateUIForGuest();
+    }
 }
 
 // ─── Products (Admin) ────────────────────────────────────────────
@@ -282,31 +364,39 @@ async function addProduct() {
     const price = parseFloat(document.getElementById('prodPrice').value);
     const quantity = parseInt(document.getElementById('prodQty').value);
     if (!id || !name || !price || !quantity) { showMessage('Please fill all fields', 'error'); return; }
-    const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
-        body: JSON.stringify({ id, name, price, quantity })
-    });
-    const result = await response.json();
-    if (result.success) {
-        showMessage(result.message, 'success');
-        closeAddProductModal();
-        loadProducts();
-        ['prodId','prodName','prodPrice','prodQty'].forEach(id => document.getElementById(id).value = '');
-    } else {
-        showMessage(result.message, 'error');
+    try {
+        const response = await fetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
+            body: JSON.stringify({ id, name, price, quantity })
+        });
+        const result = await response.json();
+        if (result.success) {
+            showMessage(result.message, 'success');
+            closeAddProductModal();
+            loadProducts();
+            ['prodId','prodName','prodPrice','prodQty'].forEach(id => document.getElementById(id).value = '');
+        } else {
+            showMessage(result.message, 'error');
+        }
+    } catch (err) {
+        showMessage('Cannot add product', 'error');
     }
 }
 
 async function deleteProduct(id) {
     if (!confirm('Remove this product from the catalog?')) return;
-    const response = await fetch(`/api/products/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${currentToken}` }
-    });
-    const result = await response.json();
-    if (result.success) { showMessage(result.message, 'success'); loadProducts(); }
-    else { showMessage(result.message, 'error'); }
+    try {
+        const response = await fetch(`/api/products/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${currentToken}` }
+        });
+        const result = await response.json();
+        if (result.success) { showMessage(result.message, 'success'); loadProducts(); }
+        else { showMessage(result.message, 'error'); }
+    } catch (err) {
+        showMessage('Cannot delete product', 'error');
+    }
 }
 
 async function loadProducts() {
@@ -349,7 +439,7 @@ async function loadProducts() {
                     <button class="btn-stock" onclick="updateStock(${product.id}, 1)" title="Increase stock">+</button>
                 </div>
             ` : `
-                <button class="btn-add-to-cart" onclick="addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})" ${!product.inStock ? 'disabled' : ''}>
+                <button class="btn-add-to-cart" onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' ${!product.inStock ? 'disabled' : ''}>
                     <i class="fas fa-shopping-bag"></i> Add to Bag
                 </button>
             `}
@@ -402,7 +492,9 @@ async function checkout() {
 // ─── Orders (Admin) ──────────────────────────────────────────────
 
 async function loadOrders() {
-    const container = document.getElementById('orders-container');
+    const container = document.getElementById('orders-list');
+    if (!container) return;
+    
     container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Loading orders…</p></div>`;
     try {
         const response = await fetch('/api/orders', {
@@ -449,7 +541,7 @@ async function loadOrders() {
     }
 }
 
-async function clearOrders() {
+async function clearAllOrders() {
     if (!confirm('Clear ALL orders? This cannot be undone.')) return;
     try {
         const response = await fetch('/api/orders', {
@@ -468,156 +560,59 @@ async function clearOrders() {
     }
 }
 
-// ─── Change Password (Admin) ─────────────────────────────────────
-
-async function changePassword() {
-    const current = document.getElementById('currentPassword').value;
-    const newPw   = document.getElementById('newPassword').value;
-    const confirm = document.getElementById('confirmPassword').value;
-
-    if (!current || !newPw || !confirm) { showMessage('Please fill all fields', 'error'); return; }
-    if (newPw !== confirm) { showMessage('Passwords do not match', 'error'); return; }
-    if (newPw.length < 6)  { showMessage('Password must be at least 6 characters', 'error'); return; }
-
-    try {
-        const response = await fetch('/api/admin/password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
-            body: JSON.stringify({ currentPassword: current, newPassword: newPw })
-        });
-        const result = await response.json();
-        if (result.success) {
-            showMessage('Password updated successfully!', 'success');
-            closeChangePasswordModal();
-            ['currentPassword','newPassword','confirmPassword'].forEach(id => document.getElementById(id).value = '');
-        } else {
-            showMessage(result.message, 'error');
-        }
-    } catch (err) {
-        showMessage('Cannot reach server.', 'error');
-    }
-}
-
-// ─── UI State ────────────────────────────────────────────────────
-
-function updateUIForAdmin() {
-    const userNameDisplay = document.getElementById('userNameDisplay');
-    const adminLoginBtn = document.getElementById('adminLoginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const adminAddBtn = document.getElementById('adminAddBtn');
-    const adminAnalyticsBtn = document.getElementById('adminAnalyticsBtn');
-    const clearOrdersBtn = document.getElementById('clearOrdersBtn');
-    
-    if (userNameDisplay) userNameDisplay.innerHTML = '<i class="fas fa-shield-alt"></i> Admin';
-    if (adminLoginBtn) adminLoginBtn.style.display = 'none';
-    if (logoutBtn) logoutBtn.style.display = 'flex';
-    if (adminAddBtn) adminAddBtn.style.display = 'flex';
-    if (adminAnalyticsBtn) adminAnalyticsBtn.style.display = 'flex';
-    if (clearOrdersBtn) clearOrdersBtn.style.display = 'flex';
-    
-    isAdmin = true;
-}
-
-function updateUIForUser() {
-    const username = localStorage.getItem('username') || 'User';
-    document.getElementById('userNameDisplay').innerHTML = `<i class="fas fa-user"></i> ${username}`;
-    document.getElementById('userLoginBtn').style.display = 'none';
-    document.getElementById('adminLoginBtn').style.display = 'flex';
-    document.getElementById('logoutBtn').style.display = 'flex';
-    document.getElementById('addProductBtn').style.display = 'none';
-    document.getElementById('ordersNavLink').style.display = 'none';
-    isAdmin = false;
-}
-
-function updateUIForGuest() {
-    const userNameDisplay = document.getElementById('userNameDisplay');
-    const adminLoginBtn = document.getElementById('adminLoginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const adminAddBtn = document.getElementById('adminAddBtn');
-    const adminAnalyticsBtn = document.getElementById('adminAnalyticsBtn');
-    const clearOrdersBtn = document.getElementById('clearOrdersBtn');
-    
-    // Only try to modify elements if they exist
-    if (userNameDisplay) userNameDisplay.innerHTML = '';
-    if (adminLoginBtn) adminLoginBtn.style.display = 'flex';
-    if (logoutBtn) logoutBtn.style.display = 'none';
-    if (adminAddBtn) adminAddBtn.style.display = 'none';
-    if (adminAnalyticsBtn) adminAnalyticsBtn.style.display = 'none';
-    if (clearOrdersBtn) clearOrdersBtn.style.display = 'none';
-    
-    isAdmin = false;
-}
-
-function checkAuth() {
-    const token = localStorage.getItem('token');
-    const admin = localStorage.getItem('isAdmin') === 'true';
-    const username = localStorage.getItem('username');
-    
-    if (token && admin) {
-        currentToken = token;
-        isAdmin = true;
-        currentUser = { username: 'Admin', isAdmin: true };
-        updateUIForAdmin();
-    } else if (token && username) {
-        currentToken = token;
-        isAdmin = false;
-        currentUser = { username: username, isAdmin: false };
-        updateUIForUser();
-    } else {
-        updateUIForGuest();
-    }
-}
-
 // ─── Modal Management ────────────────────────────────────────────
 
 function showUserLoginModal() {
-    document.getElementById('userLoginModal').style.display = 'flex';
+    const modal = document.getElementById('userLoginModal');
+    if (modal) modal.style.display = 'flex';
     switchToLogin();
 }
 
 function closeUserLoginModal() {
-    document.getElementById('userLoginModal').style.display = 'none';
+    const modal = document.getElementById('userLoginModal');
+    if (modal) modal.style.display = 'none';
 }
 
 function switchToRegister() {
-    document.getElementById('userLoginForm').style.display = 'none';
-    document.getElementById('userRegisterForm').style.display = 'block';
+    const loginForm = document.getElementById('userLoginForm');
+    const registerForm = document.getElementById('userRegisterForm');
+    if (loginForm) loginForm.style.display = 'none';
+    if (registerForm) registerForm.style.display = 'block';
 }
 
 function switchToLogin() {
-    document.getElementById('userLoginForm').style.display = 'block';
-    document.getElementById('userRegisterForm').style.display = 'none';
+    const loginForm = document.getElementById('userLoginForm');
+    const registerForm = document.getElementById('userRegisterForm');
+    if (loginForm) loginForm.style.display = 'block';
+    if (registerForm) registerForm.style.display = 'none';
 }
 
 function showAdminModal() {
-    document.getElementById('adminModal').style.display = 'flex';
+    const modal = document.getElementById('adminModal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function closeAdminModal() {
-    document.getElementById('adminModal').style.display = 'none';
+    const modal = document.getElementById('adminModal');
+    if (modal) modal.style.display = 'none';
 }
 
 function showAddProductModal() {
     if (!isAdmin) { showMessage('Admin access required', 'error'); return; }
-    document.getElementById('addProductModal').style.display = 'flex';
+    const modal = document.getElementById('addProductModal');
+    if (modal) modal.style.display = 'flex';
 }
 
 function closeAddProductModal() {
-    document.getElementById('addProductModal').style.display = 'none';
-}
-
-function showChangePasswordModal() {
-    document.getElementById('changePasswordModal').style.display = 'flex';
-}
-
-function closeChangePasswordModal() {
-    document.getElementById('changePasswordModal').style.display = 'none';
+    const modal = document.getElementById('addProductModal');
+    if (modal) modal.style.display = 'none';
 }
 
 // ─── Section Navigation ──────────────────────────────────────────
 
 function showSection(section, element) {
-    ['products','cart','orders'].forEach(s => {
+    const sections = ['products', 'cart', 'orders', 'analytics'];
+    sections.forEach(s => {
         const el = document.getElementById(`${s}Section`);
         if (el) el.style.display = 'none';
     });
@@ -625,15 +620,20 @@ function showSection(section, element) {
     if (target) target.style.display = 'block';
 
     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-    if (element) element.classList.add('active');
-    else {
-        const links = document.querySelectorAll('.nav-link');
-        if (section === 'products') links[0].classList.add('active');
-        if (section === 'cart')     links[1].classList.add('active');
-        if (section === 'orders')   document.getElementById('ordersNavLink').classList.add('active');
+    if (element && element.classList) {
+        element.classList.add('active');
+    } else {
+        // Find the corresponding nav link
+        const navLinks = document.querySelectorAll('.nav-link');
+        for (let link of navLinks) {
+            if (link.textContent.toLowerCase().includes(section.toLowerCase())) {
+                link.classList.add('active');
+                break;
+            }
+        }
     }
 
-    if (section === 'cart')   renderCart();
+    if (section === 'cart') renderCart();
     if (section === 'orders') loadOrders();
 }
 
@@ -641,10 +641,14 @@ function showSection(section, element) {
 
 function showMessage(message, type = 'success') {
     const toast = document.getElementById('toast');
-    const msg   = document.getElementById('toast-msg');
-    const icon  = toast.querySelector('.toast-icon');
-    msg.textContent = message;
-    icon.className = `toast-icon fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`;
+    if (!toast) return;
+    
+    const msg = document.getElementById('toast-msg');
+    const icon = toast.querySelector('.toast-icon');
+    if (msg) msg.textContent = message;
+    if (icon) {
+        icon.className = `toast-icon fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`;
+    }
     toast.className = `toast ${type}`;
     toast.style.display = 'flex';
     clearTimeout(toast._timer);

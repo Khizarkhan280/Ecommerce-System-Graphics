@@ -38,7 +38,10 @@
         </div>
         <div id="userInfo" class="user-info">
             <div class="user-name" id="userNameDisplay"></div>
-            <button class="btn-login" id="adminLoginBtn" onclick="showAdminModal()">
+            <button class="btn-login" id="userLoginBtn" onclick="showUserLoginModal()">
+                <i class="fas fa-user"></i> Login
+            </button>
+            <button class="btn-login" id="adminLoginBtn" onclick="showAdminModal()" style="display:none;">
                 <i class="fas fa-shield-alt"></i> Admin
             </button>
             <button class="btn-logout" id="logoutBtn" onclick="logout()" style="display:none">
@@ -134,6 +137,63 @@
 
 </div>
 
+<!-- User Login Modal -->
+<div id="userLoginModal" class="modal">
+    <div class="modal-overlay" onclick="closeUserLoginModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-user"></i> Welcome Back</h3>
+            <div class="close-modal" onclick="closeUserLoginModal()">✕</div>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="userLoginForm">
+            <div class="input-group">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" id="loginUsername" placeholder="Username">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" id="loginPassword" placeholder="Password">
+            </div>
+            <button class="btn-primary full-width" onclick="userLogin()">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+            <div class="modal-hint">
+                Don't have an account? 
+                <a href="#" onclick="switchToRegister(); return false;" style="color: var(--gold);">Register here</a>
+            </div>
+        </div>
+        
+        <!-- Register Form -->
+        <div id="userRegisterForm" style="display:none;">
+            <div class="input-group">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" id="regUsername" placeholder="Username (min 3 chars)">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" id="regEmail" placeholder="Email">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" id="regPassword" placeholder="Password (min 6 chars)">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-check-circle input-icon"></i>
+                <input type="password" id="regConfirmPassword" placeholder="Confirm Password">
+            </div>
+            <button class="btn-primary full-width" onclick="userRegister()">
+                <i class="fas fa-user-plus"></i> Register
+            </button>
+            <div class="modal-hint">
+                Already have an account? 
+                <a href="#" onclick="switchToLogin(); return false;" style="color: var(--gold);">Login here</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Admin Login Modal -->
 <div id="adminModal" class="modal">
     <div class="modal-overlay" onclick="closeAdminModal()"></div>
@@ -184,7 +244,10 @@
 </div>
 
 <!-- Toast Message -->
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast">
+    <i class="toast-icon"></i>
+    <span id="toast-msg"></span>
+</div>
 
 <script src="script.js"></script>
 </body>

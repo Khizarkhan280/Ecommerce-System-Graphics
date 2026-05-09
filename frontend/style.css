@@ -1091,6 +1091,66 @@ input:focus {
     }
 }
 
+/* Additional styles for user authentication */
+.full-width {
+    width: 100%;
+}
+
+#userLoginBtn {
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+}
+
+#userLoginBtn:hover {
+    background: var(--gold-dim);
+    transform: translateY(-1px);
+}
+
+.user-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--gold-dim);
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+.modal-hint a {
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.modal-hint a:hover {
+    text-decoration: underline;
+}
+
+/* Analytics grid */
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+/* Fix for order customer section */
+.order-customer {
+    padding: 12px 24px;
+    background: var(--gold-dim);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.order-customer i { color: var(--gold); }
+.order-customer span {
+    color: var(--text);
+    font-weight: 500;
+}
+
 /* Mobile Portrait (320px - 480px) */
 @media (max-width: 480px) {
     .logo-text {

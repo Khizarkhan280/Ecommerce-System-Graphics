@@ -1,7 +1,25 @@
+# Executables
 *.exe
+*.out
+
+# Object files
 *.o
+*.obj
+
+# Data files (keep structure, ignore content)
 Data/
 *.txt
 !README.txt
+
+# IDE files
 .vscode/
 .idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build directories
+build/
+bin/
